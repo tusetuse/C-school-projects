@@ -195,12 +195,12 @@ namespace Weather
         }
     }
 
-    public class ForecastData
+    class ForecastData
     {
         public List[] List { get; set; }
     }
 
-    public class List
+    class List
     {
         public long dt { get; set; }
         public long sunrise { get; set; }
@@ -215,14 +215,14 @@ namespace Weather
         public int Clouds { get; set; }
     }
 
-    public class temp
+    class temp
     {
         public double day { get; set; }
         public double night { get; set; }
     }
 
 
-    public class WeatherData
+    class WeatherData
     {
         public Weather[] Weather { get; set; }
         public Main Main { get; set; }
@@ -231,31 +231,31 @@ namespace Weather
         public Sys Sys { get; set; }
     }
 
-    public class Weather
+    class Weather
     {
         public string Description { get; set; }
         public string Icon { get; set; }
     }
 
-    public class Main
+    class Main
     {
         public double Temp { get; set; }
         public int Pressure { get; set; }
         public int Humidity { get; set; }
     }
 
-    public class Wind
+    class Wind
     {
         public double Speed { get; set; }
         public int Deg { get; set; }
     }
 
-    public class Clouds
+    class Clouds
     {
         public int All { get; set; }
     }
 
-    public class Sys
+    class Sys
     {
         public long Sunrise { get; set; }
         public long Sunset { get; set; }
