@@ -10,37 +10,139 @@ namespace Weather
     public partial class Form1 : Form
     {
         private HttpClient _httpClient;
+        private WeatherService _weatherService;
 
         public Form1()
         {
             InitializeComponent();
             _httpClient = new HttpClient();
-        }
+            _weatherService = new WeatherService(apiKey, _httpClient);
+    }
 
-        public string apiKey = "fb2b8cc341efaad51e55e92591ec0f59";
-        public string[] Directions = { "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW" };
+        private readonly string apiKey = "fb2b8cc341efaad51e55e92591ec0f59";
+        private readonly string[] Directions = { "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW" };
+        string cityName = "";
+        static string url_weather = "";
+        static string url_forecast = "";
 
-        public async Task<WeatherData> GetWeatherData<WeatherData>(string url_weather)
+        private async void button1_Click(object sender, EventArgs e)
         {
-            var result_weather = await _httpClient.GetAsync(url_weather);
-            if (result_weather.StatusCode == HttpStatusCode.NotFound)
+            cityName = textBox1.Text;
+            url_weather = $"https://api.openweathermap.org/data/2.5/weather?q={cityName}&appid={apiKey}&units=metric&lang=en";
+            url_forecast = $"https://api.openweathermap.org/data/2.5/forecast/daily?q={cityName}&cnt=5&appid={apiKey}&units=metric&lang=en";
+
+            try
             {
-                return default;
+                var weatherData = await _weatherService.GetWeatherDataAsync(cityName);
+                var forecastData = await _weatherService.GetForecastDataAsync(cityName);
+
+                if (weatherData != null && forecastData != null)
+                {
+                    DisplayWeatherData(weatherData);
+                    DisplayForecastData(forecastData);
+                }
             }
-            result_weather.EnsureSuccessStatusCode();
-            return await result_weather.Content.ReadFromJsonAsync<WeatherData>();
-        }
-        public async Task<ForecastData> GetForecastData<ForecastData>(string url_forecast)
-        {
-            var result_forecast = await _httpClient.GetAsync(url_forecast);
-            if (result_forecast.StatusCode == HttpStatusCode.NotFound)
+            catch (Exception ex)
             {
-                return default;
+                MessageBox.Show($"Error: {ex.Message}");
             }
-            result_forecast.EnsureSuccessStatusCode();
-            return await result_forecast.Content.ReadFromJsonAsync<ForecastData>();
         }
 
+        private void DisplayWeatherData(WeatherData weatherData)
+        {
+            double wind_deg0 = weatherData.Wind.Deg;
+            wind_deg0 = wind_deg0 % 360;
+            int index0 = (int)Math.Floor(wind_deg0 / 22.5);
+            string lmao0 = Directions[index0 % Directions.Length];
+
+            label8.Text = cityName[0] + cityName.Substring(1).ToLower();
+            label100.Text = DateTime.Now.ToShortDateString();
+            label9.Text = weatherData.Main.Temp.ToString() + "°C";
+            label10.Text = weatherData.Main.Humidity.ToString() + "%";
+            label11.Text = weatherData.Wind.Speed.ToString() + "m/s";
+            label12.Text = lmao0;
+            label13.Text = weatherData.Main.Pressure.ToString() + "hPa";
+            label14.Text = weatherData.Clouds.All.ToString() + "%";
+            label15.Text = weatherData.Weather[0].Description;
+            pictureBox1.ImageLocation = $"http://openweathermap.org/img/wn/{weatherData.Weather[0].Icon}@2x.png";
+            label18.Text = convertTime(weatherData.Sys.Sunrise).ToShortTimeString();
+            label19.Text = convertTime(weatherData.Sys.Sunset).ToShortTimeString();
+        }
+
+        private void DisplayForecastData(ForecastData forecastData)
+        {
+            double wind_deg1 = forecastData.List[1].Deg;
+            wind_deg1 = wind_deg1 % 360;
+            int index1 = (int)Math.Floor(wind_deg1 / 22.5);
+            string lmao1 = Directions[index1 % Directions.Length];
+
+            double wind_deg2 = forecastData.List[2].Deg;
+            wind_deg2 = wind_deg2 % 360;
+            int index2 = (int)Math.Floor(wind_deg2 / 22.5);
+            string lmao2 = Directions[index2 % Directions.Length];
+
+            double wind_deg3 = forecastData.List[3].Deg;
+            wind_deg3 = wind_deg3 % 360;
+            int index3 = (int)Math.Floor(wind_deg3 / 22.5);
+            string lmao3 = Directions[index3 % Directions.Length];
+
+            double wind_deg4 = forecastData.List[4].Deg;
+            wind_deg4 = wind_deg4 % 360;
+            int index4 = (int)Math.Floor(wind_deg4 / 22.5);
+            string lmao4 = Directions[index4 % Directions.Length];
+
+            groupBox1.Text = convertTime(forecastData.List[1].dt).ToShortDateString();
+            label30.Text = forecastData.List[1].temp.day.ToString() + "°C";
+            label31.Text = forecastData.List[1].temp.night.ToString() + "°C";
+            label32.Text = forecastData.List[1].humidity.ToString() + "%";
+            label33.Text = forecastData.List[1].Speed.ToString() + "m/s";
+            label34.Text = lmao1;
+            label35.Text = forecastData.List[1].pressure.ToString() + "hPa";
+            label39.Text = forecastData.List[1].Clouds.ToString() + "%";
+            label37.Text = forecastData.List[1].Weather[0].Description;
+            label38.Text = convertTime(forecastData.List[1].sunrise).ToShortTimeString();
+            label36.Text = convertTime(forecastData.List[1].sunset).ToShortTimeString();
+            pictureBox2.ImageLocation = $"http://openweathermap.org/img/wn/{forecastData.List[1].Weather[0].Icon}@2x.png";
+
+            groupBox2.Text = convertTime(forecastData.List[2].dt).ToShortDateString();
+            label49.Text = forecastData.List[2].temp.day.ToString() + "°C";
+            label48.Text = forecastData.List[2].temp.night.ToString() + "°C";
+            label47.Text = forecastData.List[2].humidity.ToString() + "%";
+            label46.Text = forecastData.List[2].Speed.ToString() + "m/s";
+            label45.Text = lmao2;
+            label44.Text = forecastData.List[2].pressure.ToString() + "hPa";
+            label40.Text = forecastData.List[2].Clouds.ToString() + "%";
+            label42.Text = forecastData.List[2].Weather[0].Description;
+            label41.Text = convertTime(forecastData.List[2].sunrise).ToShortTimeString();
+            label43.Text = convertTime(forecastData.List[2].sunset).ToShortTimeString();
+            pictureBox3.ImageLocation = $"http://openweathermap.org/img/wn/{forecastData.List[2].Weather[0].Icon}@2x.png";
+
+            groupBox3.Text = convertTime(forecastData.List[3].dt).ToShortDateString();
+            label69.Text = forecastData.List[3].temp.day.ToString() + "°C";
+            label68.Text = forecastData.List[3].temp.night.ToString() + "°C";
+            label67.Text = forecastData.List[3].humidity.ToString() + "%";
+            label66.Text = forecastData.List[3].Speed.ToString() + "m/s";
+            label65.Text = lmao3;
+            label64.Text = forecastData.List[3].pressure.ToString() + "hPa";
+            label60.Text = forecastData.List[3].Clouds.ToString() + "%";
+            label62.Text = forecastData.List[3].Weather[0].Description;
+            label61.Text = convertTime(forecastData.List[3].sunrise).ToShortTimeString();
+            label63.Text = convertTime(forecastData.List[3].sunset).ToShortTimeString();
+            pictureBox4.ImageLocation = $"http://openweathermap.org/img/wn/{forecastData.List[3].Weather[0].Icon}@2x.png";
+
+            groupBox4.Text = convertTime(forecastData.List[4].dt).ToShortDateString();
+            label89.Text = forecastData.List[4].temp.day.ToString() + "°C";
+            label88.Text = forecastData.List[4].temp.night.ToString() + "°C";
+            label87.Text = forecastData.List[4].humidity.ToString() + "%";
+            label86.Text = forecastData.List[4].Speed.ToString() + "m/s";
+            label85.Text = lmao4;
+            label84.Text = forecastData.List[4].pressure.ToString() + "hPa";
+            label80.Text = forecastData.List[4].Clouds.ToString() + "%";
+            label82.Text = forecastData.List[4].Weather[0].Description;
+            label81.Text = convertTime(forecastData.List[4].sunrise).ToShortTimeString();
+            label83.Text = convertTime(forecastData.List[4].sunset).ToShortTimeString();
+            pictureBox5.ImageLocation = $"http://openweathermap.org/img/wn/{forecastData.List[4].Weather[0].Icon}@2x.png";
+        }
         private void ClearTextBox(object sender, EventArgs e)
         {
             textBox1.Text = "";
@@ -67,130 +169,39 @@ namespace Weather
             button1_Click(sender, e);
         }
 
-        private async void button1_Click(object sender, EventArgs e)
+        class WeatherService
         {
-            string cityName = textBox1.Text;
+            private readonly string _apiKey;
+            private readonly HttpClient _client;
 
-            try
+            public WeatherService(string apiKey, HttpClient client)
             {
-                string url_weather = $"https://api.openweathermap.org/data/2.5/weather?q={cityName}&appid={apiKey}&units=metric&lang=en";
-                string url_forecast = $"https://api.openweathermap.org/data/2.5/forecast/daily?q={cityName}&cnt=5&appid={apiKey}&units=metric&lang=en";
-
-                WeatherData weather;
-                ForecastData forecast;
-
-                try
-                {
-                    weather = await GetWeatherData<WeatherData>(url_weather);
-                    forecast = await GetForecastData<ForecastData>(url_forecast);
-
-                    if (weather != null)
-                    {
-                        WeatherData weatherData = weather;
-                        ForecastData forecastData = forecast;
-
-                        double wind_deg0 = weatherData.Wind.Deg;
-                        wind_deg0 = wind_deg0 % 360;
-                        int index0 = (int)Math.Floor(wind_deg0 / 22.5);
-                        string lmao0 = Directions[index0 % Directions.Length];
-
-                        double wind_deg1 = forecastData.List[1].Deg;
-                        wind_deg1 = wind_deg1 % 360;
-                        int index1 = (int)Math.Floor(wind_deg1 / 22.5);
-                        string lmao1 = Directions[index1 % Directions.Length];
-
-                        double wind_deg2 = forecastData.List[2].Deg;
-                        wind_deg2 = wind_deg2 % 360;
-                        int index2 = (int)Math.Floor(wind_deg2 / 22.5);
-                        string lmao2 = Directions[index2 % Directions.Length];
-
-                        double wind_deg3 = forecastData.List[3].Deg;
-                        wind_deg3 = wind_deg3 % 360;
-                        int index3 = (int)Math.Floor(wind_deg3 / 22.5);
-                        string lmao3 = Directions[index3 % Directions.Length];
-
-                        double wind_deg4 = forecastData.List[4].Deg;
-                        wind_deg4 = wind_deg4 % 360;
-                        int index4 = (int)Math.Floor(wind_deg4 / 22.5);
-                        string lmao4 = Directions[index4 % Directions.Length];
-
-                        label8.Text = cityName[0] + cityName.Substring(1).ToLower();
-                        label100.Text = DateTime.Now.ToShortDateString();
-                        label9.Text = weatherData.Main.Temp.ToString() + "°C";
-                        label10.Text = weatherData.Main.Humidity.ToString() + "%";
-                        label11.Text = weatherData.Wind.Speed.ToString() + "m/s";
-                        label12.Text = lmao0;
-                        label13.Text = weatherData.Main.Pressure.ToString() + "hPa";
-                        label14.Text = weatherData.Clouds.All.ToString() + "%";
-                        label15.Text = weatherData.Weather[0].Description;
-                        pictureBox1.ImageLocation = $"http://openweathermap.org/img/wn/{weatherData.Weather[0].Icon}@2x.png";
-                        label18.Text = convertTime(weatherData.Sys.Sunrise).ToShortTimeString();
-                        label19.Text = convertTime(weatherData.Sys.Sunset).ToShortTimeString();
-
-                        groupBox1.Text = convertTime(forecastData.List[1].dt).ToShortDateString();
-                        label30.Text = forecastData.List[1].temp.day.ToString() + "°C";
-                        label31.Text = forecastData.List[1].temp.night.ToString() + "°C";
-                        label32.Text = forecastData.List[1].humidity.ToString() + "%";
-                        label33.Text = forecastData.List[1].Speed.ToString() + "m/s";
-                        label34.Text = lmao1;
-                        label35.Text = forecastData.List[1].pressure.ToString() + "hPa";
-                        label39.Text = forecastData.List[1].Clouds.ToString() + "%";
-                        label37.Text = forecastData.List[1].Weather[0].Description;
-                        label38.Text = convertTime(forecastData.List[1].sunrise).ToShortTimeString();
-                        label36.Text = convertTime(forecastData.List[1].sunset).ToShortTimeString();
-                        pictureBox2.ImageLocation = $"http://openweathermap.org/img/wn/{forecastData.List[1].Weather[0].Icon}@2x.png";
-
-                        groupBox2.Text = convertTime(forecastData.List[2].dt).ToShortDateString();
-                        label49.Text = forecastData.List[2].temp.day.ToString() + "°C";
-                        label48.Text = forecastData.List[2].temp.night.ToString() + "°C";
-                        label47.Text = forecastData.List[2].humidity.ToString() + "%";
-                        label46.Text = forecastData.List[2].Speed.ToString() + "m/s";
-                        label45.Text = lmao2;
-                        label44.Text = forecastData.List[2].pressure.ToString() + "hPa";
-                        label40.Text = forecastData.List[2].Clouds.ToString() + "%";
-                        label42.Text = forecastData.List[2].Weather[0].Description;
-                        label41.Text = convertTime(forecastData.List[2].sunrise).ToShortTimeString();
-                        label43.Text = convertTime(forecastData.List[2].sunset).ToShortTimeString();
-                        pictureBox3.ImageLocation = $"http://openweathermap.org/img/wn/{forecastData.List[2].Weather[0].Icon}@2x.png";
-
-                        groupBox3.Text = convertTime(forecastData.List[3].dt).ToShortDateString();
-                        label69.Text = forecastData.List[3].temp.day.ToString() + "°C";
-                        label68.Text = forecastData.List[3].temp.night.ToString() + "°C";
-                        label67.Text = forecastData.List[3].humidity.ToString() + "%";
-                        label66.Text = forecastData.List[3].Speed.ToString() + "m/s";
-                        label65.Text = lmao3;
-                        label64.Text = forecastData.List[3].pressure.ToString() + "hPa";
-                        label60.Text = forecastData.List[3].Clouds.ToString() + "%";
-                        label62.Text = forecastData.List[3].Weather[0].Description;
-                        label61.Text = convertTime(forecastData.List[3].sunrise).ToShortTimeString();
-                        label63.Text = convertTime(forecastData.List[3].sunset).ToShortTimeString();
-                        pictureBox4.ImageLocation = $"http://openweathermap.org/img/wn/{forecastData.List[3].Weather[0].Icon}@2x.png";
-
-                        groupBox4.Text = convertTime(forecastData.List[4].dt).ToShortDateString();
-                        label89.Text = forecastData.List[4].temp.day.ToString() + "°C";
-                        label88.Text = forecastData.List[4].temp.night.ToString() + "°C";
-                        label87.Text = forecastData.List[4].humidity.ToString() + "%";
-                        label86.Text = forecastData.List[4].Speed.ToString() + "m/s";
-                        label85.Text = lmao4;
-                        label84.Text = forecastData.List[4].pressure.ToString() + "hPa";
-                        label80.Text = forecastData.List[4].Clouds.ToString() + "%";
-                        label82.Text = forecastData.List[4].Weather[0].Description;
-                        label81.Text = convertTime(forecastData.List[4].sunrise).ToShortTimeString();
-                        label83.Text = convertTime(forecastData.List[4].sunset).ToShortTimeString();
-                        pictureBox5.ImageLocation = $"http://openweathermap.org/img/wn/{forecastData.List[4].Weather[0].Icon}@2x.png";
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Error");
-                }
+                _apiKey = apiKey;
+                _client = client;
             }
 
-            catch (Exception ex)
+            public async Task<WeatherData> GetWeatherDataAsync(string cityName)
             {
-                MessageBox.Show($"Error: {ex.Message}");
+                var url = $"https://api.openweathermap.org/data/2.5/weather?q={cityName}&appid={_apiKey}&units=metric&lang=en";
+                var result = await _client.GetAsync(url);
+                if (result.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return default;
+                }
+                result.EnsureSuccessStatusCode();
+                return await result.Content.ReadFromJsonAsync<WeatherData>();
+            }
+
+            public async Task<ForecastData> GetForecastDataAsync(string cityName)
+            {
+                var url = $"https://api.openweathermap.org/data/2.5/forecast/daily?q={cityName}&cnt=5&appid={_apiKey}&units=metric&lang=en";
+                var result = await _client.GetAsync(url);
+                if (result.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return default;
+                }
+                result.EnsureSuccessStatusCode();
+                return await result.Content.ReadFromJsonAsync<ForecastData>();
             }
         }
     }
@@ -260,4 +271,5 @@ namespace Weather
         public long Sunrise { get; set; }
         public long Sunset { get; set; }
     }
+
 }
