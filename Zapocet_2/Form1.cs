@@ -88,11 +88,9 @@ namespace Zapocet_2
                  // Run the discovery in a background task
                  await Task.Run(() =>
                  {
-                     // Try to connect to check if server exists
                      var config = EndpointConfiguration.Create();
                      var endpoints = CoreClientUtils.SelectEndpoint(serverUrl, false);
        
-                     // Update UI on the main thread
                      this.Invoke(new Action(() =>
                      {
                          if (endpoints != null)
@@ -130,7 +128,7 @@ namespace Zapocet_2
                     new UserIdentity(new AnonymousIdentityToken()),
                     null);
 
-                await BrowseServer(); // Make sure this is called after connection
+                await BrowseServer();
                 toolStripStatusLabel.Text = "Connected and browsing server";
             }
             catch (Exception ex)
@@ -149,8 +147,6 @@ namespace Zapocet_2
                 var rootNodeId = new NodeId(84, 0);  // namespace 0, identifier 84
                 var rootNode = new TreeNode("Root") { Tag = rootNodeId };
                 treeViewNodes.Nodes.Add(rootNode);
-
-                // Browse children of root
                 await BrowseChildren(rootNode);
             }
             catch (Exception ex)
@@ -204,15 +200,14 @@ namespace Zapocet_2
             }
         }
 
-        private void treeViewNodes_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        private async void treeViewNodes_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
             var node = e.Node;
 
-            // If this node only has the dummy "Loading..." node, browse for real children
             if (node.Nodes.Count == 1 && node.Nodes[0].Text == "Loading...")
             {
                 node.Nodes.Clear();
-                BrowseChildren(node);
+                await BrowseChildren(node);
             }
         }
 
