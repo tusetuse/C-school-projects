@@ -437,8 +437,7 @@ namespace Zapocet_3
             {
                 updateTimer.Stop();
                 statusLabel.Text = "Error updating values";
-                await Task.Run(() => MessageBox.Show($"Error updating values: {ex.Message}",
-                              "Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
+                await Task.Run(() => MessageBox.Show($"Error updating values: {ex.Message}","Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
             }
         }
 
