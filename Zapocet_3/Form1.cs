@@ -66,13 +66,10 @@ namespace Zapocet_3
                 statusLabel.Text = "Connecting...";
 
                 string serverUrl = $"opc.tcp://{ipAddress}:4840";
-
-                // First verify the server exists
                 var endpointDescription = CoreClientUtils.SelectEndpoint(serverUrl, false);
                 var endpointConfiguration = EndpointConfiguration.Create(configuration);
                 var endpoint = new ConfiguredEndpoint(null, endpointDescription, endpointConfiguration);
 
-                // Create session
                 session = await Session.Create(
                     configuration,
                     endpoint,
@@ -82,7 +79,6 @@ namespace Zapocet_3
                     new UserIdentity(new AnonymousIdentityToken()),
                     null);
 
-                // Once connected, browse for variables
                 await BrowseAndCreateControls();
                 updateTimer.Start();
                 statusLabel.Text = "Connected";
@@ -102,7 +98,6 @@ namespace Zapocet_3
         {
             try
             {
-                // Clear existing controls
                 panelVariables.Controls.Clear();
                 variableTextBoxes.Clear();
                 variableNodes.Clear();
@@ -110,18 +105,16 @@ namespace Zapocet_3
 
                 statusLabel.Text = "Browsing for variables in Program node...";
 
-                // Define the path to Program variables
                 var nodePath = new[]
                 {
-                    ObjectIds.ObjectsFolder,          // i=84
-                    ObjectIds.Server,                 // i=85
-                    new NodeId(20000, 4),            // ns=4;i=20000
-                    new NodeId(1000, 6),             // ns=6;i=1000
-                    new NodeId("::", 6),             // ns=6;s=::
-                    new NodeId("::Program", 6)       // ns=6;s=::Program
+                    ObjectIds.ObjectsFolder,        
+                    ObjectIds.Server,               
+                    new NodeId(20000, 4),           
+                    new NodeId(1000, 6),            
+                    new NodeId("::", 6),            
+                    new NodeId("::Program", 6)      
                 };
 
-                // Navigate through the path
                 NodeId currentNodeId = nodePath[0];
                 foreach (var targetNodeId in nodePath.Skip(2))
                 {
@@ -133,7 +126,6 @@ namespace Zapocet_3
                     }
                 }
 
-                // Now browse the Program node for variables
                 await BrowseVariablesNode(currentNodeId);
             }
             catch (Exception ex)
@@ -158,8 +150,7 @@ namespace Zapocet_3
             DiagnosticInfoCollection diagnostics = null;
 
             await Task.Run(() => {
-                session.Browse(null, null, 0, new BrowseDescriptionCollection { browseDescription },
-                             out results, out diagnostics);
+                session.Browse(null, null, 0, new BrowseDescriptionCollection { browseDescription },out results, out diagnostics);
             });
 
             if (results?[0]?.References != null)
@@ -167,9 +158,7 @@ namespace Zapocet_3
                 foreach (var reference in results[0].References)
                 {
                     var nodeId = ExpandedNodeId.ToNodeId(reference.NodeId, session.NamespaceUris);
-                    if (nodeId.Equals(targetNodeId) ||
-                        (nodeId.NamespaceIndex == targetNodeId.NamespaceIndex &&
-                         nodeId.Identifier.ToString() == targetNodeId.Identifier.ToString()))
+                    if (nodeId.Equals(targetNodeId) || (nodeId.NamespaceIndex == targetNodeId.NamespaceIndex && nodeId.Identifier.ToString() == targetNodeId.Identifier.ToString()))
                     {
                         return nodeId;
                     }
@@ -185,24 +174,19 @@ namespace Zapocet_3
             {
                 if (variableNodes.TryGetValue(arrayName, out NodeId nodeId))
                 {
-                    // Read current array to get its type and values
                     var currentValue = await Task.Run(() => session.ReadValue(nodeId));
                     if (!(currentValue.Value is Array arrayValue))
                     {
                         throw new Exception("Variable is not an array");
                     }
 
-                    // Get the element type
                     Type elementType = arrayValue.GetType().GetElementType();
 
-                    // Convert the input value to the correct type
                     object convertedValue = Convert.ChangeType(value, elementType);
 
-                    // Create a copy of the array and update the specified element
                     Array newArray = (Array)arrayValue.Clone();
                     newArray.SetValue(convertedValue, index);
 
-                    // Create write value for the entire array
                     var writeValue = new WriteValue
                     {
                         NodeId = nodeId,
@@ -210,7 +194,6 @@ namespace Zapocet_3
                         Value = new DataValue(new Variant(newArray))
                     };
 
-                    // Write value
                     WriteValueCollection writeValues = new WriteValueCollection { writeValue };
                     StatusCodeCollection results = null;
                     DiagnosticInfoCollection diagnosticInfos = null;
@@ -227,8 +210,7 @@ namespace Zapocet_3
             }
             catch (Exception ex)
             {
-                await Task.Run(() => MessageBox.Show($"Error writing array element: {ex.Message}",
-                              "Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
+                await Task.Run(() => MessageBox.Show($"Error writing array element: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
             }
         }
 
@@ -262,14 +244,11 @@ namespace Zapocet_3
                     foundVariables = true;
                     var nodeId = ExpandedNodeId.ToNodeId(reference.NodeId, session.NamespaceUris);
                     string variableName = reference.DisplayName.Text;
-
-                    // Read variable to check if it's an array
                     var value = await Task.Run(() => session.ReadValue(nodeId));
 
                     await Task.Run(() => {
                         this.Invoke((MethodInvoker)delegate
                         {
-                            // Create label
                             Label label = new Label
                             {
                                 Text = variableName + ":",
@@ -278,13 +257,10 @@ namespace Zapocet_3
                             };
                             panelVariables.Controls.Add(label);
 
-                            // Check if the value is an array
                             if (value.Value is Array arrayValue)
                             {
-                                // Create textbox for each array element
                                 for (int i = 0; i < arrayValue.Length; i++)
                                 {
-                                    // Create element label
                                     Label elementLabel = new Label
                                     {
                                         Text = $"[{i}]:",
@@ -293,7 +269,6 @@ namespace Zapocet_3
                                     };
                                     panelVariables.Controls.Add(elementLabel);
 
-                                    // Create textbox for array element
                                     TextBox textBox = new TextBox
                                     {
                                         Location = new System.Drawing.Point(150, yPosition + ((i + 1) * 30)),
@@ -301,19 +276,16 @@ namespace Zapocet_3
                                         Name = $"{variableName}[{i}]"
                                     };
 
-                                    // Add handler for when user starts editing
                                     textBox.Enter += (s, e) =>
                                     {
                                         editingVariables.Add(textBox.Name);
                                     };
 
-                                    // Add handler for when editing is complete
                                     textBox.Leave += (s, e) =>
                                     {
                                         editingVariables.Remove(textBox.Name);
                                     };
 
-                                    // Add KeyDown handler for writing values
                                     textBox.KeyDown += async (s, e) =>
                                     {
                                         if (e.KeyCode == Keys.Enter)
@@ -327,13 +299,11 @@ namespace Zapocet_3
                                     panelVariables.Controls.Add(textBox);
                                     variableTextBoxes.Add(textBox.Name, textBox);
                                 }
-                                // Store the NodeId once for the entire array
                                 variableNodes.Add(variableName, nodeId);
                                 yPosition += (arrayValue.Length + 1) * 30;
                             }
                             else
                             {
-                                // Original code for non-array variables
                                 TextBox textBox = new TextBox
                                 {
                                     Location = new System.Drawing.Point(150, yPosition),
@@ -400,12 +370,10 @@ namespace Zapocet_3
 
                         if (value.Value is Array arrayValue)
                         {
-                            // Update each array element
                             for (int i = 0; i < arrayValue.Length; i++)
                             {
                                 string elementName = $"{entry.Key}[{i}]";
 
-                                // Skip if the element is being edited
                                 if (editingVariables.Contains(elementName))
                                     continue;
 
@@ -417,7 +385,6 @@ namespace Zapocet_3
                         }
                         else
                         {
-                            // Handle non-array variables as before
                             if (editingVariables.Contains(entry.Key))
                                 continue;
 
@@ -437,7 +404,7 @@ namespace Zapocet_3
             {
                 updateTimer.Stop();
                 statusLabel.Text = "Error updating values";
-                await Task.Run(() => MessageBox.Show($"Error updating values: {ex.Message}","Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
+                await Task.Run(() => MessageBox.Show($"Error updating values: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
             }
         }
 
@@ -447,14 +414,11 @@ namespace Zapocet_3
             {
                 if (variableNodes.TryGetValue(variableName, out NodeId nodeId))
                 {
-                    // Read current value to get its type
                     var currentValue = await Task.Run(() => session.ReadValue(nodeId));
                     var valueType = currentValue.Value.GetType();
 
-                    // Convert the input value to the correct type
                     object convertedValue = Convert.ChangeType(value, valueType);
 
-                    // Create write value
                     var writeValue = new WriteValue
                     {
                         NodeId = nodeId,
@@ -462,7 +426,6 @@ namespace Zapocet_3
                         Value = new DataValue(new Variant(convertedValue))
                     };
 
-                    // Write value
                     WriteValueCollection writeValues = new WriteValueCollection { writeValue };
                     StatusCodeCollection results = null;
                     DiagnosticInfoCollection diagnosticInfos = null;
@@ -479,8 +442,7 @@ namespace Zapocet_3
             }
             catch (Exception ex)
             {
-                await Task.Run(() => MessageBox.Show($"Error writing value: {ex.Message}", "Error",
-                              MessageBoxButtons.OK, MessageBoxIcon.Error));
+                await Task.Run(() => MessageBox.Show($"Error writing value: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
             }
         }
 
