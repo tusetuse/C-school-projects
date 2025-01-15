@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35431.28
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Spotifi", "Spotifi.csproj", "{508E4B3C-F714-491B-A0EB-9B97298DF0C2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{508E4B3C-F714-491B-A0EB-9B97298DF0C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{508E4B3C-F714-491B-A0EB-9B97298DF0C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{508E4B3C-F714-491B-A0EB-9B97298DF0C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{508E4B3C-F714-491B-A0EB-9B97298DF0C2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B3630588-3BD0-4599-A142-97F25709AE69}
+	EndGlobalSection
+EndGlobal
